@@ -8,7 +8,7 @@ from flask_swagger import swagger
 from flask_cors import CORS
 from utils import APIException, generate_sitemap
 from admin import setup_admin
-from models import db, User
+from models import db, User, Character
 #from models import Person
 
 app = Flask(__name__)
@@ -45,7 +45,39 @@ def handle_hello():
 
     return jsonify(response_body), 200
 
-# this only runs if `$ python src/app.py` is executed
+
+@app.route("/characters", methods=["GET"])
+def get_characters():
+    try:
+        query_results  = Character.query.all()
+        results = list(map(lambda item: item.serialize(), query_results))
+        print(results)
+
+        response_body = {
+            "msg": "Hello, this is your GET /characters response ",
+            "results":results
+        }
+        return jsonify(response_body), 200
+    
+    except Exception as e:
+        return jsonify({"error": "Internal error", "message": str(e)}), 500
+
+
+@app.route("/character/<int:character_id>", methods=["GET"])
+def get_character(character_id):
+    try:
+        query_result = Character.query.filter_by(id = character_id).first()
+        print(query_result)
+        response_body = {
+            "msg": "Hello, this is your GET /character response ",
+            "result":query_result.serialize()
+        }
+        return jsonify(response_body), 200
+    
+    except Exception as e:
+        return jsonify({"error": "Internal error", "message": str(e)}), 500
+
+
 if __name__ == '__main__':
     PORT = int(os.environ.get('PORT', 3000))
     app.run(host='0.0.0.0', port=PORT, debug=False)
