@@ -8,7 +8,7 @@ from flask_swagger import swagger
 from flask_cors import CORS
 from utils import APIException, generate_sitemap
 from admin import setup_admin
-from models import db, User, Character, Planet, Specie
+from models import db, User, Character, Planet, Specie, Favorite
 #from models import Person
 
 app = Flask(__name__)
@@ -36,21 +36,50 @@ def handle_invalid_usage(error):
 def sitemap():
     return generate_sitemap(app)
 
-@app.route('/user', methods=['GET'])
-def handle_hello():
+# @app.route('/user', methods=['GET'])
+# def handle_hello():
 
-    response_body = {
-        "msg": "Hello, this is your GET /user response "
-    }
+#     response_body = {
+#         "msg": "Hello, this is your GET /user response "
+#     }
 
-    return jsonify(response_body), 200
+#     return jsonify(response_body), 200
 
+@app.route("/users", methods=["GET"])
+def get_users():
+    try:
+        query_results = User.query.all()
+        results = list(map(lambda user: user.serialize(), query_results))
+    
+        response_body ={
+            "msg": "Hello, this is your GET /users response ",
+            "results":results
+        }
+
+        return jsonify(response_body), 200
+    except Exception as e:
+        return jsonify({"error": "Internal error", "message": str(e)}), 500
+    
+
+@app.route("/user/<int:user_id>", methods=["GET"])
+def get_user(user_id):
+    try:
+        query_result = User.query.filter_by(id = user_id).first()
+        print(query_result)
+        response_body = {
+            "msg": "Hello, this is your GET /user/user_id response ",
+            "result":query_result.serialize()
+        }
+        return jsonify(response_body), 200
+    
+    except Exception as e:
+        return jsonify({"error": "Internal error", "message": str(e)}), 500
 
 @app.route("/characters", methods=["GET"])
 def get_characters():
     try:
         query_results  = Character.query.all()
-        results = list(map(lambda item: item.serialize(), query_results))
+        results = list(map(lambda character: character.serialize(), query_results))
         print(results)
 
         response_body = {
@@ -69,7 +98,7 @@ def get_character(character_id):
         query_result = Character.query.filter_by(id = character_id).first()
         print(query_result)
         response_body = {
-            "msg": "Hello, this is your GET /character response ",
+            "msg": "Hello, this is your GET /character/character_id response ",
             "result":query_result.serialize()
         }
         return jsonify(response_body), 200
@@ -82,7 +111,7 @@ def get_character(character_id):
 def get_planets():
     try:
         query_results = Planet.query.all()
-        results = list(map(lambda item: item.serialize(), query_results))
+        results = list(map(lambda planet: planet.serialize(), query_results))
         print(results, "Soy el print planet")
         
         response_body = {
@@ -99,7 +128,7 @@ def get_planet(planet_id):
         query_result = Planet.query.filter_by(id = planet_id).first()
         print(query_result, "Soy el print de PLanet ID")
         response_body = {
-            "msg": "hello, this is your GET /planet_id response",
+            "msg": "hello, this is your GET /planet/planet_id response",
             "result": query_result.serialize()
         }
         return jsonify(response_body), 200
@@ -111,9 +140,9 @@ def get_planet(planet_id):
 def get_species():
     try:
         query_results = Specie.query.all()
-        results = list(map(lambda item: item.serialize(), query_results))
+        results = list(map(lambda specie: specie.serialize(), query_results))
         response_body = {
-            "msg": "Hello, this is your GET /characters response ",
+            "msg": "Hello, this is your GET /species response ",
             "results":results
         }
 
@@ -128,13 +157,30 @@ def get_specie(specie_id):
         query_result = Specie.query.filter_by(id = specie_id).first()
         print(query_result)
         response_body = {
-            "msg": "Hello, this is your GET /character response ",
+            "msg": "Hello, this is your GET /species/species_id response ",
             "result":query_result.serialize()
         }
         return jsonify(response_body), 200
     
     except Exception as e:
         return jsonify({"error": "Internal error", "message": str(e)}), 500
+
+
+@app.route("/favorites", methods=["GET"])
+def get_favorites():
+    try:
+        query_results = Favorite.query.all()
+        results = list(map(lambda favorite: favorite.serialize(), query_results))
+        response_body = {
+            "msg": "Hello, this is your GET /favorites response",
+            "result": results
+        }
+
+        return jsonify(response_body), 200
+    
+    except Exception as e:
+        return jsonify({"error": "Internal error", "message": str(e)}), 500
+
 
 
 

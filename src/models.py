@@ -56,7 +56,7 @@ class Planet(db.Model):
 class Specie(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(50), nullable=False)
-    planet_id = db.Column(db.Integer, db.ForeignKey("planet.id"), nullable=False)
+    planet_id = db.Column(db.Integer, db.ForeignKey("planet.id"), nullable=True)
     characters = db.relationship("Character", backref="specie", lazy=True)
     favorites = db.relationship("Favorite", backref="specie", lazy=True)
 
