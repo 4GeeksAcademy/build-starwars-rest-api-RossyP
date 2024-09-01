@@ -8,7 +8,7 @@ from flask_swagger import swagger
 from flask_cors import CORS
 from utils import APIException, generate_sitemap
 from admin import setup_admin
-from models import db, User, Character
+from models import db, User, Character, Planet, Specie
 #from models import Person
 
 app = Flask(__name__)
@@ -76,6 +76,67 @@ def get_character(character_id):
     
     except Exception as e:
         return jsonify({"error": "Internal error", "message": str(e)}), 500
+
+
+@app.route("/planets", methods=["GET"])
+def get_planets():
+    try:
+        query_results = Planet.query.all()
+        results = list(map(lambda item: item.serialize(), query_results))
+        print(results, "Soy el print planet")
+        
+        response_body = {
+            "msg": "Hello, this is your GET /planets response ",
+            "results":results
+        }
+        return jsonify(response_body), 200
+    except Exception as e:
+        return jsonify({"error": "Internal error", "message": str(e)}), 500
+    
+@app.route("/planet/<int:planet_id>", methods=["GET"] )
+def get_planet(planet_id):
+    try:
+        query_result = Planet.query.filter_by(id = planet_id).first()
+        print(query_result, "Soy el print de PLanet ID")
+        response_body = {
+            "msg": "hello, this is your GET /planet_id response",
+            "result": query_result.serialize()
+        }
+        return jsonify(response_body), 200
+    
+    except Exception as e:
+        return jsonify({"erroe":"Internal error", "message": str(e)}), 500
+
+@app.route("/species", methods=["GET"])
+def get_species():
+    try:
+        query_results = Specie.query.all()
+        results = list(map(lambda item: item.serialize(), query_results))
+        response_body = {
+            "msg": "Hello, this is your GET /characters response ",
+            "results":results
+        }
+
+        return jsonify(response_body), 200
+    except Exception as e:
+        return jsonify({"error": "Internal erro", "message": str(e)}), 500
+
+
+@app.route("/specie/<int:specie_id>", methods=["GET"])
+def get_specie(specie_id):
+    try:
+        query_result = Specie.query.filter_by(id = specie_id).first()
+        print(query_result)
+        response_body = {
+            "msg": "Hello, this is your GET /character response ",
+            "result":query_result.serialize()
+        }
+        return jsonify(response_body), 200
+    
+    except Exception as e:
+        return jsonify({"error": "Internal error", "message": str(e)}), 500
+
+
 
 
 if __name__ == '__main__':
