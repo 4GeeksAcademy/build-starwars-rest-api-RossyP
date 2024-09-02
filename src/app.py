@@ -182,6 +182,60 @@ def get_favorites():
         return jsonify({"error": "Internal error", "message": str(e)}), 500
 
 
+@app.route("/user/<int:user_id>/favorites", methods=["GET"])
+def get_user_favorites(user_id):
+    try:
+        user = User.query.filter_by(id=user_id).first()
+        if not user:
+            return jsonify({"error": "User not found"}), 404
+        favorites = Favorite.query.filter_by(user_id=user_id).all()
+        results = list(map(lambda favorite: favorite.serialize(), favorites))
+        response_body = {
+            "msg": "Hello, this is your GET /user/<user_id>/favorites response",
+            "result": results
+        }
+
+        return jsonify(response_body), 200
+    
+    except Exception as e:
+        return jsonify({"error":"Internal error", "message": str(e)})
+
+
+@app.route("/favorite/planet/<int:planet_id>", methods=["POST"])
+def add_favorite_planet(planet_id):
+    try:
+        user_id = request.json.get("user_id")
+        if not user_id:
+            return jsonify({"error":"User ID is required"}), 400
+        
+        # Verifico que exista usuario y planeta
+        user = User.query.get("user_id")
+        if user is None:
+            return jsonify({"error": "User not found"}), 404
+        
+        planet = Planet.query.get("planet_id")
+        if planet is None:
+            return jsonify({"error":"Planet not found"}), 404
+        
+        # Compruebo si planeta ya se encuentra como favorito
+        existing_favorite = Favorite.query.filter_by(user_id=user_id, planet_id=planet_id).first()
+        if existing_favorite:
+            return jsonify({"msg": "planet already exists in user favorites"}), 200
+        
+        # Creamos un nuevo favorito
+        new_favorite = Favorite(user_id=user_id, planet_id=planet_id)
+        db.session.add(new_favorite)
+        db.session.commit()
+
+        response_body = {
+            "msg": "Planet added to favorites",
+            "favorite": new_favorite.serialize()
+        }
+        return jsonify(response_body), 201
+
+    except Exception as e:
+        return jsonify({"error": "Internal error", "message": str(e)}), 500
+
 
 
 
