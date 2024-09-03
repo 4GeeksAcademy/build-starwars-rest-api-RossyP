@@ -45,6 +45,9 @@ def sitemap():
 
 #     return jsonify(response_body), 200
 
+# -------------------------------------------------
+# USERS
+# -------------------------------------------------
 @app.route("/users", methods=["GET"])
 def get_users():
     try:
@@ -61,6 +64,30 @@ def get_users():
         return jsonify({"error": "Internal error", "message": str(e)}), 500
     
 
+@app.route("/users", methods=["POST"])
+def add_users():
+    try:
+        data = request.json
+        print(data)
+        existing_user = User.query.filter((User.email == data.get("email")) | (User.name == data.get("name"))).first()
+    
+        if existing_user:
+            return jsonify({"msg": "user already exists"}), 400
+
+        new_user = User(
+            name=data.get("name"),
+            email=data.get("email")
+        )
+
+        db.session.add(new_user)
+        db.session.commit()
+
+        return jsonify({"msg": "User added successfully", "user": new_user.serialize()}), 200
+    
+    except Exception as e:
+        return jsonify({"error": "Internal error", "message": str(e)}), 500
+
+
 @app.route("/user/<int:user_id>", methods=["GET"])
 def get_user(user_id):
     try:
@@ -75,6 +102,53 @@ def get_user(user_id):
     except Exception as e:
         return jsonify({"error": "Internal error", "message": str(e)}), 500
 
+
+
+@app.route("/user/<int:user_id>", methods=["DELETE"])
+def delete_user(user_id):
+    try:
+        user = User.query.get(user_id)
+        if not user:
+            return jsonify({"msg": "User not found"}), 404
+        
+        db.session.delete(user)
+        db.session.commit()
+        
+        return jsonify({"msg": "User deleted successfully"}), 200
+    
+    except Exception as e:
+        return jsonify({"error": "Internal error", "message": str(e)}), 500
+
+
+@app.route("/user/<int:user_id>", methods=["PUT"])
+def edit_user(user_id):
+    try:
+        user = User.query.get(user_id)
+
+        if not user:
+            return jsonify({"msg": "User not found"}), 404
+
+        data = request.json
+
+        existing_user = User.query.filter(User.email == data.get("email"), User.id != user_id).first()
+        if existing_user:
+            return jsonify({"msg":"Another user with that email already exists"}), 400
+        
+        if "name" in data:
+            user.name = data["name"]
+        if "email" in data:
+            user.email = data["email"]
+
+        db.session.commit()
+        
+        return jsonify({"msg": "User updated successfully", "user": user.serialize()}), 200
+    
+    except Exception as e:
+        return jsonify({"error": "Internal error", "message": str(e)}), 500
+
+# -------------------------------------------------
+# CHARACTERS
+# -------------------------------------------------
 @app.route("/characters", methods=["GET"])
 def get_characters():
     try:
@@ -107,6 +181,10 @@ def get_character(character_id):
         return jsonify({"error": "Internal error", "message": str(e)}), 500
 
 
+# -------------------------------------------------
+# PLANETS
+# -------------------------------------------------
+
 @app.route("/planets", methods=["GET"])
 def get_planets():
     try:
@@ -135,6 +213,11 @@ def get_planet(planet_id):
     
     except Exception as e:
         return jsonify({"erroe":"Internal error", "message": str(e)}), 500
+
+
+# -------------------------------------------------
+# SPECIES
+# -------------------------------------------------
 
 @app.route("/species", methods=["GET"])
 def get_species():
@@ -165,6 +248,10 @@ def get_specie(specie_id):
     except Exception as e:
         return jsonify({"error": "Internal error", "message": str(e)}), 500
 
+
+# -------------------------------------------------
+# FAVORITES
+# -------------------------------------------------
 
 @app.route("/favorites", methods=["GET"])
 def get_favorites():
