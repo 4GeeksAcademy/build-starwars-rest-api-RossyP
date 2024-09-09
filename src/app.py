@@ -181,6 +181,27 @@ def get_character(character_id):
         return jsonify({"error": "Internal error", "message": str(e)}), 500
 
 
+@app.route("/character", methods=["POST"])
+def add_character():
+    try:
+        data = request.get_json()
+
+        name = data.get("name")
+        specie_id = data.get("specie_id")
+        planet_id = data.get("planet_id")
+
+        if not specie_id or not planet_id:
+            return jsonify({"error": "Faltan datos"}), 400
+
+        new_character = Character(name=name, specie=specie_id, planet=planet_id)
+
+        db.session.add(new_character)
+        db.session.commit()
+
+        return jsonify({"msg": "Personaje creado", "character": new_character.serialize()}), 201
+    except Exception as e:
+        return jsonify({"error": "Error al crear personaje", "message": str(e)}), 500
+
 # -------------------------------------------------
 # PLANETS
 # -------------------------------------------------
@@ -213,6 +234,27 @@ def get_planet(planet_id):
     
     except Exception as e:
         return jsonify({"erroe":"Internal error", "message": str(e)}), 500
+
+@app.route("/planet", methods=["POST"])
+def add_planet():
+    try:
+        data = request.get_json()
+
+        name = data.get("name")
+        clima = data.get("clima")
+
+        if  not name or not clima:
+            return jsonify({"error":"Faltan datos"}), 400
+        
+        new_planet = Planet(name =name, clima = clima)
+
+        db.session.add(new_planet)
+        db.session.commit()
+
+        return jsonify({"msg": "Planeta creado", "planet": new_planet.serialize()}), 201
+
+    except Exception as e:
+        return jsonify({"error": "Error al crear planeta", "message": str(e)}), 500
 
 
 # -------------------------------------------------
@@ -248,7 +290,27 @@ def get_specie(specie_id):
     except Exception as e:
         return jsonify({"error": "Internal error", "message": str(e)}), 500
 
+@app.route("/specie", methods=["POST"])
+def add_specie():
+    try:
+        data = request.get_json()
 
+        name = data.get("name")
+        planet_id = data.get("planet_id")
+
+        if not name or not planet_id:
+            return jsonify({"error":"Faltan datos"}), 400
+        
+        new_specie = Specie(name=name, planet_id=planet_id)
+
+        db.session.add(new_specie)
+        db.session.commit()
+
+        return jsonify({"msg":"Especie creada", "specie": new_specie.serialize()}), 200
+    
+    except Exception as e:
+        return jsonify({"error": "Error al crear especie", "message": str(e)})
+    
 # -------------------------------------------------
 # FAVORITES
 # -------------------------------------------------
@@ -287,6 +349,38 @@ def get_user_favorites(user_id):
     except Exception as e:
         return jsonify({"error":"Internal error", "message": str(e)})
 
+@app.route("/favorite/character/<int:character_id>", methods=["POST"])
+def add_favorite_character(character_id):
+    try:
+        user_id = request.json.get("user_id")
+        if not user_id:
+            return jsonify({"error": "User ID is required"}), 400
+        
+        user = User.query.get("user_id")
+        if user is None:
+            return jsonify({"erroe": "User not found"}), 404
+
+        character = Character.query.get("character_id")
+        if character is None:
+            return jsonify({"error":"Character not found"}), 404
+        
+        existing_favorite = Favorite.query.filter_by(user_id = user_id, character_id= character_id).first()
+        if existing_favorite:
+            return jsonify({"msg":"Character already exists in user favorites"}), 200
+
+        new_favorite = Favorite(user_id=user_id, character_id=character_id)
+        db.session.add(new_favorite)
+        db.session.commit()
+
+        response_body = {
+            "msg": "Character added to favorites",
+            "favorite": new_favorite.serialize()
+        }
+        return jsonify(response_body), 201
+
+    except Exception as e:
+        return jsonify({"error": "Internal error", "message": str(e)}), 500
+    
 
 @app.route("/favorite/planet/<int:planet_id>", methods=["POST"])
 def add_favorite_planet(planet_id):
@@ -324,6 +418,37 @@ def add_favorite_planet(planet_id):
         return jsonify({"error": "Internal error", "message": str(e)}), 500
 
 
+@app.route("/favorite/specie/<int:specie_id>", methods=["POST"])
+def add_favorite_specie(specie_id):
+    try:
+        user_id = request.json.get("user_id")
+        if not user_id:
+            return jsonify({"error": "User ID is required"}), 400
+        
+        user = User.query.get("user_id")
+        if user is None:
+            return jsonify({"erroe": "User not found"}), 404
+
+        specie = specie.query.get("specie_id")
+        if specie is None:
+            return jsonify({"error":"specie not found"}), 404
+        
+        existing_favorite = Favorite.query.filter_by(user_id = user_id, specie_id= specie_id).first()
+        if existing_favorite:
+            return jsonify({"msg":"specie already exists in user favorites"}), 200
+
+        new_favorite = Favorite(user_id=user_id, specie_id=specie_id)
+        db.session.add(new_favorite)
+        db.session.commit()
+
+        response_body = {
+            "msg": "specie added to favorites",
+            "favorite": new_favorite.serialize()
+        }
+        return jsonify(response_body), 201
+
+    except Exception as e:
+        return jsonify({"error": "Internal error", "message": str(e)}), 500
 
 
 if __name__ == '__main__':
