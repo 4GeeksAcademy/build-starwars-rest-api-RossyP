@@ -193,7 +193,7 @@ def add_character():
         if not specie_id or not planet_id:
             return jsonify({"error": "Faltan datos"}), 400
 
-        new_character = Character(name=name, specie=specie_id, planet=planet_id)
+        new_character = Character(name=name, specie_id=specie_id, planet_id=planet_id)
 
         db.session.add(new_character)
         db.session.commit()
@@ -202,6 +202,48 @@ def add_character():
     except Exception as e:
         return jsonify({"error": "Error al crear personaje", "message": str(e)}), 500
 
+
+@app.route("/character/<int:character_id>", methods=["PUT"])
+def edit_character(character_id):
+    try:
+        character = Character.query.filter_by(id = character_id).first()
+
+        if not character:
+            return jsonify({"error":"Personaje no encontrado"}), 404
+        
+        data = request.get_json()
+
+        name = data.get("name")
+        specie_id = data.get("specie_id")
+        planet_id = data.get("planet_id")
+
+        if name:
+            character.name = name
+        if specie_id:
+            character.specie_id = specie_id
+        if planet_id:
+            character.planet_id = planet_id
+
+        db.session.commit()
+
+        return jsonify({"msg":"Personaje actualizado", "personaje": character.serialize()}), 200
+    except Exception as e:
+        return jsonify({"error":"Error al actualizar personaje", "message": str(e)}), 500
+    
+@app.route("/character/<int:character_id>", methods=["DELETE"])
+def delete_character(character_id):
+    try:
+        character = Character.query.filter_by(id=character_id).first()
+
+        if not character:
+            return jsonify({"error":"Personaje no encontrado"}), 404
+        
+        db.session.delete(character)
+        db.session.commit()
+
+        return jsonify({"msg":f"Personaje {character.name}, eliminado"}), 200
+    except Exception as e:
+        return jsonify({"error": "Error al eliminar personaje", "message": str(e)}), 500
 # -------------------------------------------------
 # PLANETS
 # -------------------------------------------------
@@ -256,7 +298,44 @@ def add_planet():
     except Exception as e:
         return jsonify({"error": "Error al crear planeta", "message": str(e)}), 500
 
+@app.route("/planet/<int:planet_id>", methods=["PUT"])
+def edit_planet(planet_id):
+    try:
+        planet = planet.query.filter_by(id = planet_id).first()
 
+        if not planet:
+            return jsonify({"error":"Planeta no encontrado"}), 404
+        
+        data = request.get_json()
+
+        name = data.get("name")
+        clima = data.get("clima")
+
+        if name:
+            planet.name = name
+        if clima:
+            planet.clima = clima
+
+        db.session.commit()
+
+        return jsonify({"msg":"Planeta actualizado", "planeta": planet.serialize()}), 200
+    except Exception as e:
+        return jsonify({"error":"Error al actualizar Planeta", "message": str(e)}), 500
+    
+@app.route("/planet/<int:planet_id>", methods=["DELETE"])
+def delete_planet(planet_id):
+    try:
+        planet = Planet.query.filter_by(id=planet_id).first()
+
+        if not planet:
+            return jsonify({"error":"Planeta no encontrado"}), 404
+        
+        db.session.delete(planet)
+        db.session.commit()
+
+        return jsonify({"msg":f"Planeta {planet.name}, eliminado"}), 200
+    except Exception as e:
+        return jsonify({"error": "Error al eliminar Planeta", "message": str(e)}), 500
 # -------------------------------------------------
 # SPECIES
 # -------------------------------------------------
@@ -311,6 +390,44 @@ def add_specie():
     except Exception as e:
         return jsonify({"error": "Error al crear especie", "message": str(e)})
     
+@app.route("/specie/<int:specie_id>", methods=["PUT"])
+def edit_specie(specie_id):
+    try:
+        specie = Specie.query.filter_by(id = specie_id).first()
+
+        if not specie:
+            return jsonify({"error":"Personaje no encontrado"}), 404
+        
+        data = request.get_json()
+
+        name = data.get("name")
+        planet_id = data.get("planet_id")
+
+        if name:
+            specie.name = name
+        if planet_id:
+            specie.planet_id = planet_id
+
+        db.session.commit()
+
+        return jsonify({"msg":"especie actualizado", "especie": specie.serialize()}), 200
+    except Exception as e:
+        return jsonify({"error":"Error al actualizar especie", "message": str(e)}), 500
+    
+@app.route("/specie/<int:specie_id>", methods=["DELETE"])
+def delete_specie(specie_id):
+    try:
+        specie = specie.query.filter_by(id=specie_id).first()
+
+        if not specie:
+            return jsonify({"error":"especie no encontrada"}), 404
+        
+        db.session.delete(specie)
+        db.session.commit()
+
+        return jsonify({"msg":f"especie {specie.name}, eliminada"}), 200
+    except Exception as e:
+        return jsonify({"error": "Error al eliminar especie", "message": str(e)}), 500
 # -------------------------------------------------
 # FAVORITES
 # -------------------------------------------------
@@ -348,6 +465,8 @@ def get_user_favorites(user_id):
     
     except Exception as e:
         return jsonify({"error":"Internal error", "message": str(e)})
+
+# POST
 
 @app.route("/favorite/character/<int:character_id>", methods=["POST"])
 def add_favorite_character(character_id):
@@ -449,6 +568,92 @@ def add_favorite_specie(specie_id):
 
     except Exception as e:
         return jsonify({"error": "Internal error", "message": str(e)}), 500
+
+
+# DELETE
+
+@app.route("/favorite/planet/<int:planet_id>", methods=["DELETE"])
+def delete_favorite_planet(planet_id):
+    try:
+        user_id = request.json.get("user_id")
+        if not user_id:
+            return jsonify({"error": "Se requiere el ID del usuario"}), 400
+   
+        user = User.query.get(user_id)
+        if user is None:
+            return jsonify({"error": "Usuario no encontrado"}), 404
+        
+        planet = Planet.query.get(planet_id)
+        if planet is None:
+            return jsonify({"error": "Planeta no encontrado"}), 404
+  
+        favorite = Favorite.query.filter_by(user_id=user_id, planet_id=planet_id).first()
+        if not favorite:
+            return jsonify({"error": "Favorito no encontrado"}), 404
+        
+        db.session.delete(favorite)
+        db.session.commit()
+
+        return jsonify({"msg": "Planeta eliminado de favoritos"}), 200
+
+    except Exception as e:
+        return jsonify({"error": "Error interno", "message": str(e)}), 500
+
+
+@app.route("/favorite/character/<int:character_id>", methods=["DELETE"])
+def delete_favorite_character(character_id):
+    try:
+        user_id = request.json.get("user_id")
+        if not user_id:
+            return jsonify({"error": "Se requiere el ID del usuario"}), 400
+        
+        user = User.query.get(user_id)
+        if user is None:
+            return jsonify({"error": "Usuario no encontrado"}), 404
+        
+        character = Character.query.get(character_id)
+        if character is None:
+            return jsonify({"error": "Personaje no encontrado"}), 404
+        
+        favorite = Favorite.query.filter_by(user_id=user_id, character_id=character_id).first()
+        if not favorite:
+            return jsonify({"error": "Favorito no encontrado"}), 404
+        
+        db.session.delete(favorite)
+        db.session.commit()
+
+        return jsonify({"msg": "Personaje eliminado de favoritos"}), 200
+
+    except Exception as e:
+        return jsonify({"error": "Error interno", "message": str(e)}), 500
+
+
+@app.route("/favorite/specie/<int:specie_id>", methods=["DELETE"])
+def delete_favorite_specie(specie_id):
+    try:
+        user_id = request.json.get("user_id")
+        if not user_id:
+            return jsonify({"error": "Se requiere el ID del usuario"}), 400
+        
+        user = User.query.get(user_id)
+        if user is None:
+            return jsonify({"error": "Usuario no encontrado"}), 404
+        
+        specie = Specie.query.get(specie_id)
+        if specie is None:
+            return jsonify({"error": "Especie no encontrada"}), 404
+        
+        favorite = Favorite.query.filter_by(user_id=user_id, specie_id=specie_id).first()
+        if not favorite:
+            return jsonify({"error": "Favorito no encontrado"}), 404
+        
+        db.session.delete(favorite)
+        db.session.commit()
+
+        return jsonify({"msg": "Especie eliminada de favoritos"}), 200
+
+    except Exception as e:
+        return jsonify({"error": "Error interno", "message": str(e)}), 500
 
 
 if __name__ == '__main__':
